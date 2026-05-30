@@ -1,0 +1,1 @@
+# polaroid_tamsung_claim
