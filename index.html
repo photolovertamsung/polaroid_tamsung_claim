@@ -5,14 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>แจ้งเคลมสินค้า - Polaroid Tamsung</title>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{font-family:'Prompt',sans-serif;background:#faf8f5;min-height:100vh;color:#1a1a1a}
 .nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#fff;border-bottom:1px solid #f0e8de;position:sticky;top:0;z-index:10}
 .nav-logo{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600;color:#7a5c42}
 .menu-wrap{position:relative}
-.menu-trigger{background:#f5ede3;border:none;cursor:pointer;width:36px;height:36px;border-radius:50%;color:#7a5c42;font-size:20px;display:flex;align-items:center;justify-content:center;transition:.2s;line-height:1}
+.menu-trigger{background:#f5ede3;border:none;cursor:pointer;width:36px;height:36px;border-radius:50%;color:#7a5c42;font-size:20px;display:flex;align-items:center;justify-content:center;transition:.2s;line-height:1;position:relative}
 .menu-trigger:hover{background:#e8d5c0}
+.badge{position:absolute;top:-4px;right:-4px;background:#FF3B30;color:#fff;font-size:10px;font-weight:600;min-width:18px;height:18px;border-radius:20px;display:none;align-items:center;justify-content:center;padding:0 4px;border:2px solid #fff}
+.badge.show{display:flex}
 .dropdown{position:absolute;right:0;top:calc(100% + 8px);background:#fff;border:1px solid #f0e8de;border-radius:16px;min-width:160px;display:none;overflow:hidden;z-index:99;box-shadow:0 8px 24px rgba(122,92,66,.1)}
 .dropdown.open{display:block}
 .dropdown-item{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:14px;font-family:'Prompt',sans-serif;color:#1a1a1a;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:.1s}
@@ -35,10 +39,7 @@ input[type=text],input[type=tel],input[type=password],select,textarea{
 }
 input[type=text]:focus,input[type=tel]:focus,input[type=password]:focus,select:focus,textarea:focus{border-color:#c4a882;background:#fff}
 textarea{resize:vertical;min-height:80px;line-height:1.6}
-select{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a7e6a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 14px center;background-color:#f7f7f7;padding-right:36px;
-}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a7e6a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-color:#f7f7f7;padding-right:36px}
 .type-grid{display:grid;grid-template-columns:1fr;gap:8px}
 .type-option{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid #e8e8e8;border-radius:10px;cursor:pointer;transition:.2s;background:#f7f7f7}
 .type-option:hover{border-color:#c4a882;background:#f5ede3}
@@ -48,15 +49,9 @@ select{
 .type-option.selected .type-icon{background:#e8d5c0}
 .type-label{font-size:14px;font-weight:500;color:#1a1a1a}
 .type-sub{font-size:12px;color:#9a7e6a}
-.btn-submit{
-  width:100%;padding:14px;
-  background:#7a5c42;color:#fff;
-  border:none;border-radius:10px;
-  font-size:15px;font-weight:600;font-family:'Prompt',sans-serif;
-  cursor:pointer;transition:.2s;
-  display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;
-}
+.btn-submit{width:100%;padding:14px;background:#7a5c42;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;font-family:'Prompt',sans-serif;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
 .btn-submit:hover{background:#6a4e38}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed}
 .success-card{background:#f0f7ee;border:1.5px solid #b8ddb0;border-radius:20px;padding:24px;text-align:center;margin-bottom:16px;display:none}
 .success-icon{font-size:36px;margin-bottom:10px}
 .success-title{font-size:16px;font-weight:600;color:#3d6b35;margin-bottom:6px}
@@ -82,9 +77,11 @@ select{
 .claim-list{display:flex;flex-direction:column;gap:10px}
 .claim-card{background:#fff;border:1px solid #f0e8de;border-radius:16px;padding:16px;cursor:pointer;transition:.2s}
 .claim-card:hover{border-color:#c4a882;box-shadow:0 4px 12px rgba(122,92,66,.08)}
+.claim-card.new-item{animation:flashNew .8s ease}
+@keyframes flashNew{0%{background:#fff8e1;border-color:#f0c040}100%{background:#fff;border-color:#f0e8de}}
 .claim-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .claim-order{font-size:14px;font-weight:600;color:#7a5c42}
-.badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500}
+.status-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500}
 .badge-wait{background:#fdf3e3;color:#8a5c1a}
 .badge-process{background:#e8f0fb;color:#2a5298}
 .badge-done{background:#eef7ec;color:#2d6b27}
@@ -92,6 +89,9 @@ select{
 .claim-type{font-size:12px;color:#9a7e6a;margin-top:3px}
 .claim-date{font-size:11px;color:#c4b0a0;margin-top:6px}
 .empty-state{text-align:center;padding:48px 0;color:#9a7e6a;font-size:14px}
+.new-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:20px;font-size:14px;font-family:'Prompt',sans-serif;display:none;align-items:center;gap:8px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:slideUp .3s ease}
+.new-toast.show{display:flex}
+@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
 .modal-backdrop{position:fixed;inset:0;background:rgba(61,44,30,.35);display:none;align-items:center;justify-content:center;z-index:100}
 .modal-backdrop.open{display:flex}
 .modal{background:#fff;border-radius:20px;padding:28px;width:min(480px,92vw);max-height:82vh;overflow-y:auto;position:relative}
@@ -106,10 +106,15 @@ select{
 </head>
 <body>
 
+<div class="new-toast" id="toast">🔴 มีการแจ้งเคลมใหม่เข้ามา!</div>
+
 <div class="nav">
   <div class="nav-logo">📷 Polaroid_tamsung</div>
   <div class="menu-wrap">
-    <button class="menu-trigger" onclick="toggleMenu()" aria-label="เมนู">⋯</button>
+    <button class="menu-trigger" onclick="toggleMenu()" aria-label="เมนู">
+      ⋯
+      <span class="badge" id="notif-badge"></span>
+    </button>
     <div class="dropdown" id="dropdown">
       <button class="dropdown-item" onclick="openLogin()">🏠 หลังบ้าน</button>
     </div>
@@ -165,7 +170,7 @@ select{
       <div class="field-label">💬 รายละเอียดเพิ่มเติม</div>
       <textarea id="f-detail" placeholder="อธิบายปัญหาโดยละเอียด..."></textarea>
     </div>
-    <button class="btn-submit" onclick="submitClaim()">✈️ ส่งคำร้องเคลม</button>
+    <button class="btn-submit" id="btn-submit" onclick="submitClaim()">✈️ ส่งคำร้องเคลม</button>
   </div>
 </div>
 
@@ -222,74 +227,137 @@ select{
 </div>
 
 <script>
-let claims=[], currentId=null, selectedType='';
-const PASS='11122540';
+const SUPABASE_URL = 'https://zduqfsbohimmvoxiikxf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkdXFmc2JvaGltbXZveGlpa3hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3Nzc2NzIsImV4cCI6MjA5NTM1MzY3Mn0.WBX4APPw1Wn8fJzMZjEtzOgA_-cs29pkJgZwr95wIFw';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ใช้ localStorage แทน window.storage สำหรับไฟล์ HTML
-function saveClaims(){ try{ localStorage.setItem('pt_claims', JSON.stringify(claims)); }catch(e){} }
-function loadClaims(){ try{ const d=localStorage.getItem('pt_claims'); if(d) claims=JSON.parse(d); }catch(e){ claims=[]; } renderList(); }
+let claims = [], currentId = null, selectedType = '';
+const PASS = '11122540';
+const typeIcon = {'ได้รับสินค้าไม่ครบ':'📦','สินค้ามีตำหนิ':'🔍','ได้รับสินค้าผิด':'🔄'};
 
+// ---- UI helpers ----
 function toggleMenu(){ document.getElementById('dropdown').classList.toggle('open'); }
-document.addEventListener('click',e=>{ if(!e.target.closest('.menu-wrap')) document.getElementById('dropdown').classList.remove('open'); });
+document.addEventListener('click', e => { if(!e.target.closest('.menu-wrap')) document.getElementById('dropdown').classList.remove('open'); });
 function setPage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); }
 function openLogin(){ document.getElementById('dropdown').classList.remove('open'); document.getElementById('pin-input').value=''; document.getElementById('login-error').style.display='none'; setPage('login'); setTimeout(()=>document.getElementById('pin-input').focus(),100); }
-function checkPin(){ if(document.getElementById('pin-input').value===PASS){ setPage('admin'); renderList(); } else { document.getElementById('login-error').style.display='block'; document.getElementById('pin-input').value=''; document.getElementById('pin-input').focus(); } }
+function checkPin(){ if(document.getElementById('pin-input').value===PASS){ clearBadge(); setPage('admin'); loadClaims(); } else { document.getElementById('login-error').style.display='block'; document.getElementById('pin-input').value=''; document.getElementById('pin-input').focus(); } }
 function selectType(el,val){ document.querySelectorAll('.type-option').forEach(o=>o.classList.remove('selected')); el.classList.add('selected'); selectedType=val; }
 
-function submitClaim(){
-  const name=document.getElementById('f-name').value.trim();
-  const phone=document.getElementById('f-phone').value.trim();
-  const order=document.getElementById('f-order').value.trim();
-  const detail=document.getElementById('f-detail').value.trim();
-  if(!name||!phone||!order||!selectedType){ alert('กรุณากรอกข้อมูลให้ครบถ้วนค่ะ'); return; }
-  claims.unshift({ id:'CLM-'+Date.now(), name, phone, order, type:selectedType, detail, status:'รอดำเนินการ', date:new Date().toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) });
-  saveClaims();
-  const card=document.getElementById('success-card');
-  card.style.display='block';
+// ---- Badge ----
+let unreadCount = 0;
+function addBadge(){
+  unreadCount++;
+  const b = document.getElementById('notif-badge');
+  b.textContent = unreadCount > 9 ? '9+' : unreadCount;
+  b.classList.add('show');
+}
+function clearBadge(){
+  unreadCount = 0;
+  const b = document.getElementById('notif-badge');
+  b.classList.remove('show');
+}
+
+// ---- Toast ----
+function showToast(){
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 4000);
+}
+
+// ---- Submit ----
+async function submitClaim(){
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const order_id = document.getElementById('f-order').value.trim();
+  const detail = document.getElementById('f-detail').value.trim();
+  if(!name||!phone||!order_id||!selectedType){ alert('กรุณากรอกข้อมูลให้ครบถ้วนค่ะ'); return; }
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+  const { error } = await sb.from('claims').insert([{ name, phone, order_id, type: selectedType, detail, status: 'รอดำเนินการ' }]);
+  btn.disabled = false; btn.innerHTML = '✈️ ส่งคำร้องเคลม';
+  if(error){ alert('เกิดข้อผิดพลาด กรุณาลองใหม่ค่ะ'); return; }
+  const card = document.getElementById('success-card');
+  card.style.display = 'block';
   card.scrollIntoView({behavior:'smooth',block:'center'});
   document.getElementById('f-name').value=''; document.getElementById('f-phone').value=''; document.getElementById('f-order').value=''; document.getElementById('f-detail').value='';
   document.querySelectorAll('.type-option').forEach(o=>o.classList.remove('selected')); selectedType='';
-  setTimeout(()=>card.style.display='none',7000);
+  setTimeout(()=>card.style.display='none', 7000);
+}
+
+// ---- Load & Render ----
+async function loadClaims(){
+  const { data } = await sb.from('claims').select('*').order('created_at', { ascending: false });
+  claims = data || [];
+  renderList();
 }
 
 function renderList(){
-  const q=(document.getElementById('search-box').value||'').toLowerCase();
-  const st=document.getElementById('filter-status').value;
-  const list=document.getElementById('claim-list');
-  const filtered=claims.filter(c=>(!q||c.name.toLowerCase().includes(q)||c.order.toLowerCase().includes(q))&&(!st||c.status===st));
-  document.getElementById('s-total').textContent=claims.length;
-  document.getElementById('s-wait').textContent=claims.filter(c=>c.status==='รอดำเนินการ').length;
-  document.getElementById('s-done').textContent=claims.filter(c=>c.status==='เสร็จแล้ว').length;
-  const typeIcon={'ได้รับสินค้าไม่ครบ':'📦','สินค้ามีตำหนิ':'🔍','ได้รับสินค้าผิด':'🔄'};
+  const q = (document.getElementById('search-box').value||'').toLowerCase();
+  const st = document.getElementById('filter-status').value;
+  const list = document.getElementById('claim-list');
+  const filtered = claims.filter(c=>(!q||c.name.toLowerCase().includes(q)||c.order_id.toLowerCase().includes(q))&&(!st||c.status===st));
+  document.getElementById('s-total').textContent = claims.length;
+  document.getElementById('s-wait').textContent = claims.filter(c=>c.status==='รอดำเนินการ').length;
+  document.getElementById('s-done').textContent = claims.filter(c=>c.status==='เสร็จแล้ว').length;
   if(!filtered.length){ list.innerHTML='<div class="empty-state">📭<br>ยังไม่มีรายการเคลมค่ะ</div>'; return; }
-  list.innerHTML=filtered.map(c=>`
-    <div class="claim-card" onclick="openModal('${c.id}')">
-      <div class="claim-top"><span class="claim-order">${c.order}</span><span class="badge ${c.status==='รอดำเนินการ'?'badge-wait':c.status==='กำลังดำเนินการ'?'badge-process':'badge-done'}">${c.status}</span></div>
+  list.innerHTML = filtered.map(c=>`
+    <div class="claim-card" id="card-${c.id}" onclick="openModal(${c.id})">
+      <div class="claim-top">
+        <span class="claim-order">${c.order_id}</span>
+        <span class="status-badge ${c.status==='รอดำเนินการ'?'badge-wait':c.status==='กำลังดำเนินการ'?'badge-process':'badge-done'}">${c.status}</span>
+      </div>
       <div class="claim-name">${c.name} · ${c.phone}</div>
       <div class="claim-type">${typeIcon[c.type]||'📋'} ${c.type}</div>
-      <div class="claim-date">${c.date} · ${c.id}</div>
+      <div class="claim-date">${new Date(c.created_at).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})} · CLM-${c.id}</div>
     </div>`).join('');
 }
 
+// ---- Modal ----
 function openModal(id){
-  currentId=id; const c=claims.find(x=>x.id===id); if(!c) return;
-  document.getElementById('m-title').textContent=c.order;
-  document.getElementById('m-status').value=c.status;
-  const typeIcon={'ได้รับสินค้าไม่ครบ':'📦','สินค้ามีตำหนิ':'🔍','ได้รับสินค้าผิด':'🔄'};
+  currentId = id;
+  const c = claims.find(x=>x.id===id); if(!c) return;
+  document.getElementById('m-title').textContent = c.order_id;
+  document.getElementById('m-status').value = c.status;
   document.getElementById('m-body').innerHTML=`
     <div class="detail-chip"><div><div class="detail-key">ชื่อลูกค้า</div><div class="detail-val">${c.name}</div></div></div>
     <div class="detail-chip"><div><div class="detail-key">เบอร์โทร</div><div class="detail-val">${c.phone}</div></div></div>
-    <div class="detail-chip"><div><div class="detail-key">Order ID</div><div class="detail-val">${c.order}</div></div></div>
+    <div class="detail-chip"><div><div class="detail-key">Order ID</div><div class="detail-val">${c.order_id}</div></div></div>
     <div class="detail-chip"><div><div class="detail-key">ประเภทปัญหา</div><div class="detail-val">${typeIcon[c.type]||'📋'} ${c.type}</div></div></div>
     <div class="detail-chip"><div><div class="detail-key">รายละเอียด</div><div class="detail-val">${c.detail||'—'}</div></div></div>
-    <div class="detail-chip"><div><div class="detail-key">วันที่แจ้ง</div><div class="detail-val">${c.date}</div></div></div>`;
+    <div class="detail-chip"><div><div class="detail-key">วันที่แจ้ง</div><div class="detail-val">${new Date(c.created_at).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div></div>`;
   document.getElementById('modal').classList.add('open');
 }
-
 function closeModal(e){ if(e.target.id==='modal') document.getElementById('modal').classList.remove('open'); }
-function updateStatus(){ const c=claims.find(x=>x.id===currentId); if(!c) return; c.status=document.getElementById('m-status').value; saveClaims(); renderList(); }
+async function updateStatus(){
+  const s = document.getElementById('m-status').value;
+  await sb.from('claims').update({ status: s }).eq('id', currentId);
+  const c = claims.find(x=>x.id===currentId);
+  if(c) c.status = s;
+  renderList();
+}
 
-loadClaims();
+// ---- Realtime ----
+sb.channel('claims-channel')
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'claims' }, payload => {
+    claims.unshift(payload.new);
+    // badge + toast เสมอ (ไม่ว่าจะอยู่หน้าไหน)
+    addBadge();
+    showToast();
+    // ถ้าอยู่หน้า admin อยู่แล้ว ให้ render และ flash การ์ดใหม่
+    if(document.getElementById('page-admin').classList.contains('active')){
+      renderList();
+      setTimeout(()=>{
+        const el = document.getElementById('card-'+payload.new.id);
+        if(el) el.classList.add('new-item');
+      }, 100);
+    }
+  })
+  .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'claims' }, payload => {
+    const idx = claims.findIndex(x=>x.id===payload.new.id);
+    if(idx>-1) claims[idx] = payload.new;
+    if(document.getElementById('page-admin').classList.contains('active')) renderList();
+  })
+  .subscribe();
 </script>
 </body>
 </html>
