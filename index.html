@@ -148,7 +148,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     </div>
     <div class="field">
       <div class="field-label">🧾 Order ID / เลขออเดอร์ *</div>
-      <input type="text" id="f-order" placeholder="เช่น ORD-20250530-001">
+      <div style="display:flex;align-items:center;gap:0">
+        <span style="padding:11px 12px;background:#e8d5c0;border:1.5px solid #e8e8e8;border-right:none;border-radius:10px 0 0 10px;font-size:14px;font-weight:600;color:#7a5c42;white-space:nowrap">PT-</span>
+        <input type="text" id="f-order" placeholder="00000" style="border-radius:0 10px 10px 0;border-left:none" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+      </div>
     </div>
     <div class="field">
       <div class="field-label">⚠️ ประเภทปัญหา *</div>
@@ -270,7 +273,7 @@ function showToast(){
 async function submitClaim(){
   const name = document.getElementById('f-name').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
-  const order_id = document.getElementById('f-order').value.trim();
+  const order_id = 'PT-' + document.getElementById('f-order').value.trim();
   const detail = document.getElementById('f-detail').value.trim();
   if(!name||!phone||!order_id||!selectedType){ alert('กรุณากรอกข้อมูลให้ครบถ้วนค่ะ'); return; }
   const btn = document.getElementById('btn-submit');
@@ -311,10 +314,10 @@ function renderList(){
       <div class="claim-name" onclick="openModal(${c.id})" style="cursor:pointer">${c.name} · ${c.phone}</div>
       <div class="claim-type" onclick="openModal(${c.id})" style="cursor:pointer">${typeIcon[c.type]||'📋'} ${c.type}</div>
       <div class="claim-date" onclick="openModal(${c.id})" style="cursor:pointer">${new Date(c.created_at).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})} · CLM-${c.id}</div>
-      <button class="done-toggle" onclick="toggleDone(${c.id}, event)">
-        <input type="checkbox" ${c.status==='เสร็จแล้ว'?'checked':''} onclick="event.stopPropagation()" onchange="toggleDone(${c.id}, event)">
+      <label class="done-toggle" onclick="event.stopPropagation(); toggleDone(${c.id}, event)">
+        <input type="checkbox" ${c.status==='เสร็จแล้ว'?'checked':''} onclick="event.stopPropagation()">
         ดำเนินการเสร็จแล้ว
-      </button>
+      </label>
     </div>`).join('');
 }
 
@@ -345,13 +348,11 @@ async function updateStatus(){
 async function toggleDone(id, event){
   event.stopPropagation();
   const c = claims.find(x=>x.id===id); if(!c) return;
-  if(c.status !== 'เสร็จแล้ว'){
-    const ok = confirm('ยืนยันลบรายการนี้ออกจากระบบเลยนะคะ?\n\n"' + c.order_id + ' · ' + c.name + '"\n\n⚠️ ลบแล้วกู้คืนไม่ได้ค่ะ');
-    if(!ok){ renderList(); return; }
-    await sb.from('claims').delete().eq('id', id);
-    claims = claims.filter(x=>x.id!==id);
-    renderList();
-  }
+  const ok = confirm('ยืนยันลบรายการนี้ออกจากระบบเลยนะคะ?\n\n"' + c.order_id + ' · ' + c.name + '"\n\n⚠️ ลบแล้วกู้คืนไม่ได้ค่ะ');
+  if(!ok){ renderList(); return; }
+  await sb.from('claims').delete().eq('id', id);
+  claims = claims.filter(x=>x.id!==id);
+  renderList();
 }
 
 // ---- Realtime ----
