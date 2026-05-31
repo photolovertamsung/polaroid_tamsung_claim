@@ -83,8 +83,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .claim-order{font-size:14px;font-weight:600;color:#7a5c42}
 .status-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500}
 .badge-wait{background:#fdf3e3;color:#8a5c1a}
-.badge-process{background:#e8f0fb;color:#2a5298}
 .badge-done{background:#eef7ec;color:#2d6b27}
+.done-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-size:12px;color:#9a7e6a;padding:6px 0 0;border:none;background:none;font-family:'Prompt',sans-serif;transition:.2s}
+.done-toggle:hover{color:#3d6b35}
+.done-toggle input[type=checkbox]{width:16px;height:16px;accent-color:#3d6b35;cursor:pointer;flex-shrink:0}
+.claim-card.is-done{opacity:.6}
+.claim-card.is-done .claim-order{text-decoration:line-through;color:#9a7e6a}
 .claim-name{font-size:13px;color:#1a1a1a;font-weight:500}
 .claim-type{font-size:12px;color:#9a7e6a;margin-top:3px}
 .claim-date{font-size:11px;color:#c4b0a0;margin-top:6px}
@@ -202,7 +206,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <select id="filter-status" onchange="renderList()">
       <option value="">สถานะทั้งหมด</option>
       <option value="รอดำเนินการ">รอดำเนินการ</option>
-      <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
       <option value="เสร็จแล้ว">เสร็จแล้ว</option>
     </select>
   </div>
@@ -219,7 +222,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <label>อัพเดตสถานะ</label>
       <select id="m-status" onchange="updateStatus()">
         <option value="รอดำเนินการ">รอดำเนินการ</option>
-        <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
         <option value="เสร็จแล้ว">เสร็จแล้ว</option>
       </select>
     </div>
@@ -301,14 +303,18 @@ function renderList(){
   document.getElementById('s-done').textContent = claims.filter(c=>c.status==='เสร็จแล้ว').length;
   if(!filtered.length){ list.innerHTML='<div class="empty-state">📭<br>ยังไม่มีรายการเคลมค่ะ</div>'; return; }
   list.innerHTML = filtered.map(c=>`
-    <div class="claim-card" id="card-${c.id}" onclick="openModal(${c.id})">
-      <div class="claim-top">
+    <div class="claim-card${c.status==='เสร็จแล้ว'?' is-done':''}" id="card-${c.id}">
+      <div class="claim-top" onclick="openModal(${c.id})" style="cursor:pointer">
         <span class="claim-order">${c.order_id}</span>
-        <span class="status-badge ${c.status==='รอดำเนินการ'?'badge-wait':c.status==='กำลังดำเนินการ'?'badge-process':'badge-done'}">${c.status}</span>
+        <span class="status-badge ${c.status==='เสร็จแล้ว'?'badge-done':'badge-wait'}">${c.status}</span>
       </div>
-      <div class="claim-name">${c.name} · ${c.phone}</div>
-      <div class="claim-type">${typeIcon[c.type]||'📋'} ${c.type}</div>
-      <div class="claim-date">${new Date(c.created_at).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})} · CLM-${c.id}</div>
+      <div class="claim-name" onclick="openModal(${c.id})" style="cursor:pointer">${c.name} · ${c.phone}</div>
+      <div class="claim-type" onclick="openModal(${c.id})" style="cursor:pointer">${typeIcon[c.type]||'📋'} ${c.type}</div>
+      <div class="claim-date" onclick="openModal(${c.id})" style="cursor:pointer">${new Date(c.created_at).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})} · CLM-${c.id}</div>
+      <button class="done-toggle" onclick="toggleDone(${c.id}, event)">
+        <input type="checkbox" ${c.status==='เสร็จแล้ว'?'checked':''} onclick="event.stopPropagation()" onchange="toggleDone(${c.id}, event)">
+        ดำเนินการเสร็จแล้ว
+      </button>
     </div>`).join('');
 }
 
@@ -334,6 +340,18 @@ async function updateStatus(){
   const c = claims.find(x=>x.id===currentId);
   if(c) c.status = s;
   renderList();
+}
+
+async function toggleDone(id, event){
+  event.stopPropagation();
+  const c = claims.find(x=>x.id===id); if(!c) return;
+  if(c.status !== 'เสร็จแล้ว'){
+    const ok = confirm('ยืนยันลบรายการนี้ออกจากระบบเลยนะคะ?\n\n"' + c.order_id + ' · ' + c.name + '"\n\n⚠️ ลบแล้วกู้คืนไม่ได้ค่ะ');
+    if(!ok){ renderList(); return; }
+    await sb.from('claims').delete().eq('id', id);
+    claims = claims.filter(x=>x.id!==id);
+    renderList();
+  }
 }
 
 // ---- Realtime ----
